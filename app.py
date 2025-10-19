@@ -3,6 +3,7 @@ import yt_dlp
 
 app = Flask(__name__)
 
+
 @app.route('/get-audio', methods=['POST'])
 def get_audio():
     data = request.get_json()
@@ -57,6 +58,7 @@ def get_audio():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5050)
