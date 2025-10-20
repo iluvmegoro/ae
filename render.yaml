@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: yt-audio-api
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "gunicorn app:app -w 4 -k gevent -b 0.0.0.0:$PORT"
