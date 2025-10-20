@@ -27,6 +27,8 @@ logging.basicConfig(level=logging.INFO)
 @app.route('/get-audio', methods=['POST'])
 def get_audio():
     data = request.get_json()
+    logging.info(f"📩 Received data: {data}")
+    
     url = data.get('url')
     if not url:
         return jsonify({'error': 'URL missing'}), 400
