@@ -1,4 +1,5 @@
-flask
-gunicorn
-yt-dlp
-requests
+Flask==3.1.2
+flask-cors==6.0.1
+gunicorn==23.0.0
+gevent==25.9.1
+yt-dlp==2025.10.14
