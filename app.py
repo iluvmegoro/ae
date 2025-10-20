@@ -3,8 +3,21 @@ from flask_cors import CORS
 import yt_dlp
 import subprocess
 import logging
+import os
+import shutil
 
-COOKIE_PATH = '/etc/secrets/cookies.txt'  # Render Secret File
+# Render Secret File → 書き込み可能な場所にコピー
+SECRETS_SOURCE = '/etc/secrets/cookies.txt'
+COOKIES_PATH = '/tmp/cookies.txt'
+
+# secrets を /tmp にコピー（必要に応じて）
+if not os.path.exists(COOKIES_PATH):
+    try:
+        shutil.copy(SECRETS_SOURCE, COOKIES_PATH)
+        logging.info("✅ cookies.txt copied to /tmp")
+    except Exception as e:
+        logging.error(f"❌ Failed to copy cookies.txt: {e}")
+
 app = Flask(__name__)
 CORS(app)
 logging.basicConfig(level=logging.INFO)
@@ -22,8 +35,8 @@ def get_audio():
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': COOKIE_PATH,
-        'cachedir': False,  
+        'cookiefile': COOKIES_PATH,
+        'cachedir': False,
         'extract_flat': 'in_playlist',
         'skip_download': True,
     }
@@ -35,7 +48,11 @@ def get_audio():
             info = ydl.extract_info(url, download=False)
 
             if 'entries' in info:
-                video_urls = [f"https://www.youtube.com/watch?v={e['id']}" for e in info['entries']]
+                video_urls = [
+                    f"https://www.youtube.com/watch?v={e['id']}"
+                    for e in info['entries']
+                    if isinstance(e, dict) and e.get('id')
+                ]
             else:
                 video_urls = [info['webpage_url']]
 
@@ -43,8 +60,8 @@ def get_audio():
             'format': 'bestaudio[ext=m4a]/bestaudio',
             'quiet': True,
             'no_warnings': True,
-            'cookiefile': COOKIE_PATH,
-            'cachedir': False  # これも付けとくといいかも
+            'cookiefile': COOKIES_PATH,
+            'cachedir': False
         }
 
         with yt_dlp.YoutubeDL(audio_opts) as ydl:
