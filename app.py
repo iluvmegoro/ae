@@ -23,7 +23,7 @@ def get_audio():
         'quiet': True,
         'no_warnings': True,
         'cookiefile': COOKIE_PATH,
-        'cachedir': False,  # ✅ 半角クォートで
+        'cachedir': False,  
         'extract_flat': 'in_playlist',
         'skip_download': True,
     }
