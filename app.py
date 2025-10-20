@@ -4,20 +4,22 @@ import yt_dlp
 import subprocess
 import logging
 import os
-import shutil
+import base64
 
-# Render Secret File → 書き込み可能な場所にコピー
-SECRETS_SOURCE = '/etc/secrets/cookies.txt'
+# cookies.txt を Base64 環境変数から復元して /tmp に書き出す
 COOKIES_PATH = '/tmp/cookies.txt'
-
-# secrets を /tmp にコピー（必要に応じて）
-if not os.path.exists(COOKIES_PATH):
+encoded = os.environ.get('COOKIES_BASE64')
+if encoded and not os.path.exists(COOKIES_PATH):
     try:
-        shutil.copy(SECRETS_SOURCE, COOKIES_PATH)
-        logging.info("✅ cookies.txt copied to /tmp")
+        with open(COOKIES_PATH, 'wb') as f:
+            f.write(base64.b64decode(encoded))
+        print("✅ cookies.txt written to /tmp")
     except Exception as e:
-        logging.error(f"❌ Failed to copy cookies.txt: {e}")
+        print(f"❌ Failed to decode cookies.txt: {e}")
+else:
+    print("⚠️ No cookies or already exists")
 
+# Flask アプリ設定
 app = Flask(__name__)
 CORS(app)
 logging.basicConfig(level=logging.INFO)
@@ -85,7 +87,6 @@ def get_audio():
     except Exception as e:
         logging.error(f"Extraction error: {e}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/stream', methods=['GET'])
 def stream_audio():
