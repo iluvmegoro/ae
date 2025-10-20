@@ -4,8 +4,9 @@ import yt_dlp
 import subprocess
 import logging
 
+COOKIE_PATH = '/etc/secrets/cookies.txt'  # RenderのSecret Filesのパス
 app = Flask(__name__)
-CORS(app)  # CORSを有効化！
+CORS(app)  # CORSを有効化
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/get-audio', methods=['POST'])
@@ -18,7 +19,7 @@ def get_audio():
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'cookiefile': 'cookies.txt',
+        'cookiefile': COOKIE_PATH,
         'extract_flat': 'in_playlist',
         'skip_download': True,
     }
@@ -38,7 +39,7 @@ def get_audio():
             'format': 'bestaudio[ext=m4a]/bestaudio',
             'quiet': True,
             'no_warnings': True,
-            'cookiefile': 'cookies.txt',
+            'cookiefile': COOKIE_PATH,  # ✅ ←修正済み
         }
 
         with yt_dlp.YoutubeDL(audio_opts) as ydl:
