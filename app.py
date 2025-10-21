@@ -3,28 +3,11 @@ from flask_cors import CORS
 import yt_dlp
 import subprocess
 import logging
-import os
-import base64
-
-# === ✅ Cookie復元 ===
-COOKIES_PATH = '/tmp/cookies.txt'
-encoded = os.environ.get('COOKIES_BASE64')
-if encoded and not os.path.exists(COOKIES_PATH):
-    try:
-        with open(COOKIES_PATH, 'wb') as f:
-            f.write(base64.b64decode(encoded))
-        print("✅ cookies.txt written to /tmp")
-    except Exception as e:
-        print(f"❌ Failed to decode cookies.txt: {e}")
-else:
-    print("⚠️ No cookies or already exists")
 
 # === ✅ yt-dlp ロガー定義 ===
 class YTDLPLogger:
     def debug(self, msg):
         logging.debug(msg)
-        if 'Logged in as' in msg:
-            logging.info(f"✅ {msg}")  # ログイン成功確認
 
     def warning(self, msg):
         logging.warning(msg)
@@ -49,11 +32,10 @@ def get_audio():
     if not url.startswith("https://www.youtube.com") and not url.startswith("https://youtu.be"):
         return jsonify({'error': 'Invalid URL'}), 400
 
-    # === ✅ yt-dlp オプション（ログイン確認用）===
+    # === ✅ yt-dlp オプション（Cookieなし）===
     ydl_opts = {
         'quiet': False,
         'no_warnings': False,
-        'cookiefile': COOKIES_PATH,
         'cachedir': False,
         'extract_flat': 'in_playlist',
         'skip_download': True,
@@ -67,7 +49,6 @@ def get_audio():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
-            # ログイン確認（uploader_id など）
             uploader = info.get('uploader_id')
             if uploader:
                 logging.info(f"✅ 動画のアップロード者: {uploader}")
@@ -88,7 +69,6 @@ def get_audio():
             'format': 'bestaudio[ext=m4a]/bestaudio',
             'quiet': False,
             'no_warnings': False,
-            'cookiefile': COOKIES_PATH,
             'cachedir': False,
             'logger': YTDLPLogger(),
             'verbose': True
