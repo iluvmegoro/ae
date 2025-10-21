@@ -6,7 +6,7 @@ import logging
 import os
 import base64
 
-# cookies.txt を Base64 環境変数から復元して /tmp に書き出す
+# === ✅ Cookie復元 ===
 COOKIES_PATH = '/tmp/cookies.txt'
 encoded = os.environ.get('COOKIES_BASE64')
 if encoded and not os.path.exists(COOKIES_PATH):
@@ -19,16 +19,29 @@ if encoded and not os.path.exists(COOKIES_PATH):
 else:
     print("⚠️ No cookies or already exists")
 
-# Flask アプリ設定
+# === ✅ yt-dlp ロガー定義 ===
+class YTDLPLogger:
+    def debug(self, msg):
+        logging.debug(msg)
+        if 'Logged in as' in msg:
+            logging.info(f"✅ {msg}")  # ログイン成功確認
+
+    def warning(self, msg):
+        logging.warning(msg)
+
+    def error(self, msg):
+        logging.error(msg)
+
+# === ✅ Flask 設定 ===
 app = Flask(__name__)
 CORS(app)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)  # DEBUGログ有効化
 
 @app.route('/get-audio', methods=['POST'])
 def get_audio():
     data = request.get_json()
     logging.info(f"📩 Received data: {data}")
-    
+
     url = data.get('url')
     if not url:
         return jsonify({'error': 'URL missing'}), 400
@@ -36,22 +49,30 @@ def get_audio():
     if not url.startswith("https://www.youtube.com") and not url.startswith("https://youtu.be"):
         return jsonify({'error': 'Invalid URL'}), 400
 
+    # === ✅ yt-dlp オプション（ログイン確認用）===
     ydl_opts = {
-    'quiet': False,  # ← quietをFalseに
-    'no_warnings': False,
-    'cookiefile': COOKIES_PATH,
-    'cachedir': False,
-    'extract_flat': 'in_playlist',
-    'skip_download': True,
-    'verbose': True,  # ← 追加
-    'logger': logging.getLogger()  # ← Pythonのloggerに出す
-}
+        'quiet': False,
+        'no_warnings': False,
+        'cookiefile': COOKIES_PATH,
+        'cachedir': False,
+        'extract_flat': 'in_playlist',
+        'skip_download': True,
+        'verbose': True,
+        'logger': YTDLPLogger()
+    }
 
     try:
         results = []
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+
+            # ログイン確認（uploader_id など）
+            uploader = info.get('uploader_id')
+            if uploader:
+                logging.info(f"✅ 動画のアップロード者: {uploader}")
+            else:
+                logging.warning("⚠️ ログインしていないか、uploader_id が取得できませんでした")
 
             if 'entries' in info:
                 video_urls = [
@@ -62,12 +83,15 @@ def get_audio():
             else:
                 video_urls = [info['webpage_url']]
 
+        # === ✅ 実際の音声URLを取得 ===
         audio_opts = {
             'format': 'bestaudio[ext=m4a]/bestaudio',
-            'quiet': True,
-            'no_warnings': True,
+            'quiet': False,
+            'no_warnings': False,
             'cookiefile': COOKIES_PATH,
-            'cachedir': False
+            'cachedir': False,
+            'logger': YTDLPLogger(),
+            'verbose': True
         }
 
         with yt_dlp.YoutubeDL(audio_opts) as ydl:
@@ -84,12 +108,12 @@ def get_audio():
                             'duration': duration
                         })
                 except Exception as e:
-                    logging.error(f"Failed to process {v_url}: {e}")
+                    logging.error(f"❌ Failed to process {v_url}: {e}")
 
         return jsonify({'tracks': results})
 
     except Exception as e:
-        logging.error(f"Extraction error: {e}")
+        logging.error(f"❌ Extraction error: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/stream', methods=['GET'])
@@ -126,5 +150,5 @@ def stream_audio():
             }
         )
     except Exception as e:
-        logging.error(f"Streaming error: {e}")
+        logging.error(f"❌ Streaming error: {e}")
         return Response(f"Error: {e}", status=500)
