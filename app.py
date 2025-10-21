@@ -19,42 +19,10 @@ if encoded and not os.path.exists(COOKIES_PATH):
 else:
     print("⚠️ No cookies or already exists")
 
-# === ✅ yt-dlp ロガー定義 ===
-class YTDLPLogger:
-    def debug(self, msg):
-        try:
-            logging.debug(str(msg))
-            print(f"[DEBUG] {msg}")
-            if isinstance(msg, str) and 'Logged in as' in msg:
-                logging.info(f"✅ {msg}")
-        except Exception as e:
-            print(f"[DEBUG ERROR] {e}")
-
-    def info(self, msg):
-        try:
-            logging.info(str(msg))
-            print(f"[INFO] {msg}")
-        except Exception as e:
-            print(f"[INFO ERROR] {e}")
-
-    def warning(self, msg):
-        try:
-            logging.warning(str(msg))
-            print(f"[WARNING] {msg}")
-        except Exception as e:
-            print(f"[WARNING ERROR] {e}")
-
-    def error(self, msg):
-        try:
-            logging.error(str(msg))
-            print(f"[ERROR] {msg}")
-        except Exception as e:
-            print(f"[ERROR ERROR] {e}")
-
 # === ✅ Flask 設定 ===
 app = Flask(__name__)
 CORS(app)
-logging.basicConfig(level=logging.DEBUG)  # DEBUGログ有効化
+logging.basicConfig(level=logging.DEBUG)
 
 @app.route('/get-audio', methods=['POST'])
 def get_audio():
@@ -68,7 +36,6 @@ def get_audio():
     if not url.startswith("https://www.youtube.com") and not url.startswith("https://youtu.be"):
         return jsonify({'error': 'Invalid URL'}), 400
 
-    # === ✅ yt-dlp オプション（ログイン確認用）===
     ydl_opts = {
         'quiet': False,
         'no_warnings': False,
@@ -77,7 +44,6 @@ def get_audio():
         'extract_flat': 'in_playlist',
         'skip_download': True,
         'verbose': True,
-        'logger': YTDLPLogger()
     }
 
     try:
@@ -86,7 +52,6 @@ def get_audio():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
 
-            # ログイン確認（uploader_id など）
             uploader = info.get('uploader_id')
             if uploader:
                 logging.info(f"✅ 動画のアップロード者: {uploader}")
@@ -102,15 +67,13 @@ def get_audio():
             else:
                 video_urls = [info['webpage_url']]
 
-        # === ✅ 実際の音声URLを取得 ===
         audio_opts = {
             'format': 'bestaudio[ext=m4a]/bestaudio',
             'quiet': False,
             'no_warnings': False,
             'cookiefile': COOKIES_PATH,
             'cachedir': False,
-            'logger': YTDLPLogger(),
-            'verbose': True
+            'verbose': True,
         }
 
         with yt_dlp.YoutubeDL(audio_opts) as ydl:
