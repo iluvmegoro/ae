@@ -26,6 +26,9 @@ class YTDLPLogger:
         if 'Logged in as' in msg:
             logging.info(f"✅ {msg}")  # ログイン成功確認
 
+    def info(self, msg):  # ← ✅ 追加！
+        logging.info(msg)
+
     def warning(self, msg):
         logging.warning(msg)
 
