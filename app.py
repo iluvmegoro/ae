@@ -22,18 +22,34 @@ else:
 # === ✅ yt-dlp ロガー定義 ===
 class YTDLPLogger:
     def debug(self, msg):
-        logging.debug(msg)
-        if 'Logged in as' in msg:
-            logging.info(f"✅ {msg}")  # ログイン成功確認
+        try:
+            logging.debug(str(msg))
+            print(f"[DEBUG] {msg}")
+            if isinstance(msg, str) and 'Logged in as' in msg:
+                logging.info(f"✅ {msg}")
+        except Exception as e:
+            print(f"[DEBUG ERROR] {e}")
 
-    def info(self, msg):  # ← ✅ 追加！
-        logging.info(msg)
+    def info(self, msg):
+        try:
+            logging.info(str(msg))
+            print(f"[INFO] {msg}")
+        except Exception as e:
+            print(f"[INFO ERROR] {e}")
 
     def warning(self, msg):
-        logging.warning(msg)
+        try:
+            logging.warning(str(msg))
+            print(f"[WARNING] {msg}")
+        except Exception as e:
+            print(f"[WARNING ERROR] {e}")
 
     def error(self, msg):
-        logging.error(msg)
+        try:
+            logging.error(str(msg))
+            print(f"[ERROR] {msg}")
+        except Exception as e:
+            print(f"[ERROR ERROR] {e}")
 
 # === ✅ Flask 設定 ===
 app = Flask(__name__)
