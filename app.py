@@ -37,13 +37,15 @@ def get_audio():
         return jsonify({'error': 'Invalid URL'}), 400
 
     ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'cookiefile': COOKIES_PATH,
-        'cachedir': False,
-        'extract_flat': 'in_playlist',
-        'skip_download': True,
-    }
+    'quiet': False,  # ← quietをFalseに
+    'no_warnings': False,
+    'cookiefile': COOKIES_PATH,
+    'cachedir': False,
+    'extract_flat': 'in_playlist',
+    'skip_download': True,
+    'verbose': True,  # ← 追加
+    'logger': logging.getLogger()  # ← Pythonのloggerに出す
+}
 
     try:
         results = []
